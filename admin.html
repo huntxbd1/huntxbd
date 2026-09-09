@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel — HUNTX BD</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0a; --card: #141414; --border: #262626;
+      --red: #e10600; --text: #f0f0f0; --muted: #888;
+      --green: #00c853; --input-bg: #1a1a1a;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Noto Sans Bengali', 'Inter', system-ui, sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; padding: 20px 16px 60px;
+    }
+    .wrap { max-width: 640px; margin: 0 auto; }
+    h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+    .subtitle { color: var(--muted); font-size: 13px; margin-bottom: 28px; }
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 20px; margin-bottom: 18px;
+    }
+    .card h2 {
+      font-size: 15px; font-weight: 600; margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    label {
+      display: block; font-size: 12px; color: var(--muted);
+      margin-bottom: 6px; font-weight: 500;
+    }
+    input[type="text"], input[type="password"], textarea {
+      width: 100%; background: var(--input-bg); border: 1px solid var(--border);
+      border-radius: 10px; padding: 11px 14px; color: var(--text);
+      font-family: inherit; font-size: 14px; margin-bottom: 14px; outline: none;
+    }
+    input:focus, textarea:focus { border-color: var(--red); }
+    textarea { min-height: 80px; resize: vertical; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .toggle-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 0; border-bottom: 1px solid var(--border); margin-bottom: 14px;
+    }
+    .toggle-label { font-size: 14px; font-weight: 500; }
+    .switch { position: relative; width: 48px; height: 26px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; cursor: pointer; inset: 0;
+      background: #333; border-radius: 26px; transition: 0.2s;
+    }
+    .slider:before {
+      content: ''; position: absolute; height: 20px; width: 20px;
+      left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.2s;
+    }
+    input:checked + .slider { background: var(--green); }
+    input:checked + .slider:before { transform: translateX(22px); }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 12px 22px; border: none; border-radius: 10px;
+      font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--red), #9b0000);
+      color: white; width: 100%; margin-top: 8px;
+    }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-danger { background: transparent; color: #ff5252; border: 1px solid #442222; font-size: 13px; padding: 8px 14px; }
+    .actions { display: flex; gap: 10px; margin-top: 10px; }
+    .actions .btn { flex: 1; }
+    .login-box { max-width: 360px; margin: 80px auto 0; text-align: center; }
+    .msg {
+      padding: 12px 16px; border-radius: 10px; font-size: 13px;
+      margin-bottom: 16px; display: none;
+    }
+    .msg.success {
+      background: rgba(0,200,83,0.12); border: 1px solid rgba(0,200,83,0.3);
+      color: var(--green); display: block;
+    }
+    .msg.error {
+      background: rgba(225,6,0,0.12); border: 1px solid rgba(225,6,0,0.3);
+      color: #ff6b6b; display: block;
+    }
+    .file-info { font-size: 12px; color: var(--muted); margin-top: -8px; margin-bottom: 14px; }
+    .note {
+      background: #1a1500; border: 1px solid #3d3200; border-radius: 10px;
+      padding: 14px; font-size: 12.5px; color: #e6c200; line-height: 1.55; margin-bottom: 18px;
+    }
+    .upload-zone {
+      border: 2px dashed #333; border-radius: 12px; padding: 28px 16px;
+      text-align: center; cursor: pointer; margin-bottom: 10px; background: #111;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .upload-zone:hover, .upload-zone.dragover { border-color: var(--red); background: #1a0a0a; }
+    .upload-zone.has-file { border-color: var(--green); border-style: solid; background: rgba(0,200,83,0.06); }
+    .hidden { display: none !important; }
+    .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .back-link { color: var(--muted); text-decoration: none; font-size: 13px; }
+    .back-link:hover { color: white; }
+    .progress-wrap { display: none; margin: 10px 0 14px; }
+    .progress-bar {
+      height: 10px; background: #222; border-radius: 5px; overflow: hidden;
+    }
+    .progress-bar span {
+      display: block; height: 100%; width: 0%; background: linear-gradient(90deg, var(--green), #69f0ae);
+      transition: width 0.15s;
+    }
+    .progress-text { font-size: 12px; color: var(--muted); margin-top: 6px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div id="loginScreen" class="login-box">
+    <h1>⚙ Admin Panel</h1>
+    <p class="subtitle" style="margin-bottom:24px">HUNTX BD</p>
+    <div id="loginMsg" class="msg"></div>
+    <input type="password" id="password" placeholder="Admin Password" autocomplete="current-password">
+    <button class="btn btn-primary" onclick="login()">Login</button>
+  </div>
+
+  <div id="dashboard" class="wrap hidden">
+    <div class="top-bar">
+      <div>
+        <h1>Admin Dashboard</h1>
+        <p class="subtitle" style="margin:0">Direct APK Upload · Firebase</p>
+      </div>
+      <a href="index.html" class="back-link">← সাইট দেখুন</a>
+    </div>
+
+    <div id="saveMsg" class="msg"></div>
+
+    <div class="note">
+      <strong>Direct Upload</strong><br>
+      নিচে APK সিলেক্ট করুন → সেভ চাপুন। ফাইল Firebase Storage-এ যাবে এবং সবার জন্য ডাউনলোড লিংক লাইভ হবে।<br>
+      <b>জরুরি:</b> Storage কাজ করতে Firebase Blaze প্ল্যান চালু থাকতে হবে (ফ্রি কোটা আছে)।
+    </div>
+
+    <div class="card">
+      <h2><span>📦</span> APK ম্যানেজমেন্ট</h2>
+
+      <label>APK ফাইল আপলোড করুন (ডিরেক্ট)</label>
+      <div class="upload-zone" id="uploadZone" onclick="document.getElementById('apkFileInput').click()">
+        <input type="file" id="apkFileInput" accept=".apk,application/vnd.android.package-archive" style="display:none">
+        <div id="uploadPlaceholder">
+          <div style="font-size:28px;margin-bottom:8px">📤</div>
+          <div style="font-weight:600;margin-bottom:4px">ক্লিক করে APK সিলেক্ট করুন</div>
+          <div style="font-size:12px;color:#888">অথবা ফাইল টেনে আনুন · ৪০–৫০ MB সাপোর্টেড</div>
+        </div>
+        <div id="uploadSelected" class="hidden">
+          <div style="font-size:28px;margin-bottom:8px">✅</div>
+          <div style="font-weight:600;margin-bottom:4px" id="selectedFileName">file.apk</div>
+          <div style="font-size:12px;color:#00c853" id="selectedFileSize">0 MB</div>
+        </div>
+      </div>
+
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-bar"><span id="progressBar"></span></div>
+        <div class="progress-text" id="progressText">অপেক্ষা করুন...</div>
+      </div>
+      <p class="file-info" id="uploadStatus">কোনো নতুন ফাইল সিলেক্ট করা হয়নি</p>
+
+      <div class="toggle-row">
+        <span class="toggle-label">APK Available (ডাউনলোড বাটন দেখাবে)</span>
+        <label class="switch">
+          <input type="checkbox" id="apkAvailable">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <label>Download Link (এখানে নতুন লিংক পেস্ট/এডিট করুন)</label>
+      <input type="text" id="apkUrl" placeholder="https://www.mediafire.com/file/... অথবা Direct APK লিংক">
+      <p class="file-info">নতুন অ্যাপের লিংক এখানে দিয়ে নিচে সেভ চাপুন। Firebase আপলোড ছাড়াই কাজ করবে।</p>
+      <input type="hidden" id="manualApkUrl" value="">
+
+      <div class="row">
+        <div>
+          <label>ভার্সন</label>
+          <input type="text" id="version" placeholder="v1.0.0" value="v1.0.0">
+        </div>
+        <div>
+          <label>ফাইল সাইজ</label>
+          <input type="text" id="fileSize" placeholder="42 MB" value="42 MB">
+        </div>
+      </div>
+
+      <label>Status Title (APK নেই)</label>
+      <input type="text" id="statusTitle" value="বর্তমানে কোনো APK আপলোড করা নেই">
+      <label>Status Description (APK নেই)</label>
+      <textarea id="statusDesc">বর্তমানে নতুন ভার্সন আপলোড হচ্ছে। খুব শীঘ্রই APK ডাউনলোডের জন্য উন্মুক্ত হবে।</textarea>
+      <label>Status Title (APK আছে)</label>
+      <input type="text" id="statusTitleAvailable" value="অফিসিয়াল APK এখন ডাউনলোডের জন্য প্রস্তুত">
+    </div>
+
+    <div class="card">
+      <h2><span>🏷</span> হিরো সেকশন</h2>
+      <label>Nav Text</label>
+      <input type="text" id="navText" value="ডেইলি টুর্নামেন্ট খেলুন • পুরস্কার জিতুন • ইনস্ট্যান্ট পেমেন্ট পান">
+      <label>Badge Text</label>
+      <input type="text" id="badgeText" value="OFFICIAL TOURNAMENT APK · 100% VERIFIED SAFE">
+      <label>Hero Title</label>
+      <textarea id="heroTitle">HUNTX BD — বাংলাদেশের সেরা গেমিং টুর্নামেন্ট অ্যাপস এখনই ডাউনলোড করুন</textarea>
+      <label>Hero Description</label>
+      <textarea id="heroDesc">বাংলাদেশের ১ নম্বর বিশ্বস্ত এস্পোর্টস টুর্নামেন্ট প্ল্যাটফর্ম। এখনই অফিসিয়াল APK ডাউনলোড করে ফ্রি ফায়ার ও পাবজি টুর্নামেন্টে জয়লাভ করুন।</textarea>
+    </div>
+
+    <div class="card">
+      <h2><span>📖</span> Quick Guide</h2>
+      <label>Guide Title</label>
+      <input type="text" id="guideTitle" value="কিভাবে অ্যাপটি ইনস্টল করবেন?">
+      <label>Guide Subtitle</label>
+      <textarea id="guideSub">খুব সহজ ৩টি ধাপে কোনো ঝামেলা ছাড়াই আপনার অ্যান্ড্রয়েড ফোনে অ্যাপটি ইনস্টল করুন</textarea>
+      <label>Step 1 Title</label>
+      <input type="text" id="step1Title" value="APK ডাউনলোড করুন">
+      <label>Step 1 Description</label>
+      <textarea id="step1Desc">সবচেয়ে বা লাল "DOWNLOAD APK" বাটনে ট্যাপ করে লেটেস্ট অফিসিয়াল ফাইলটি ফোনে নামিয়ে নিন।</textarea>
+      <label>Step 2 Title</label>
+      <input type="text" id="step2Title" value="Unknown Sources অন করুন">
+      <label>Step 2 Description</label>
+      <textarea id="step2Desc">ফোনের সেটিংস বা ডাউনলোড বার থেকে "Allow from this source" পারমিশন দিন।</textarea>
+      <label>Step 3 Title</label>
+      <input type="text" id="step3Title" value="ইনস্টল ও টুর্নামেন্ট শুরু">
+      <label>Step 3 Description</label>
+      <textarea id="step3Desc">ইনস্টলেশন শেষ করে অ্যাপ ওপেন করে ফ্রি ফায়ার ও পাবজি টুর্নামেন্টে অংশ নিন।</textarea>
+    </div>
+
+    <div class="card">
+      <h2><span>🔒</span> পাসওয়ার্ড পরিবর্তন</h2>
+      <label>নতুন পাসওয়ার্ড</label>
+      <input type="password" id="newPassword" placeholder="নতুন পাসওয়ার্ড (ঐচ্ছিক)">
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="saveBtn" onclick="saveConfig()">💾 আপলোড ও সেভ (লাইভ)</button>
+    </div>
+    <div class="actions" style="margin-top:12px">
+      <button class="btn btn-danger" onclick="logout()">লগআউট</button>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-storage-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCK1R5YkuId7RuSlVCVV7H9p7ENNAdrVKY",
+      authDomain: "huntx-bd-website.firebaseapp.com",
+      projectId: "huntx-bd-website",
+      storageBucket: "huntx-bd-website.firebasestorage.app",
+      messagingSenderId: "74852996135",
+      appId: "1:74852996135:web:df6a719aead7b44320ea02",
+      measurementId: "G-SZVQRFZECC"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    const DEFAULT_PASS = 'huntx2026';
+    const PASS_KEY = 'huntx_admin_pass';
+    function getStoredPass() { return localStorage.getItem(PASS_KEY) || DEFAULT_PASS; }
+
+    function login() {
+      const input = document.getElementById('password').value;
+      const msg = document.getElementById('loginMsg');
+      if (input === getStoredPass()) {
+        msg.className = 'msg';
+        showDashboard();
+      } else {
+        msg.className = 'msg error';
+        msg.textContent = 'ভুল পাসওয়ার্ড!';
+        document.getElementById('password').value = '';
+      }
+    }
+
+    function logout() {
+      document.getElementById('dashboard').classList.add('hidden');
+      document.getElementById('loginScreen').classList.remove('hidden');
+      document.getElementById('password').value = '';
+      document.getElementById('loginMsg').className = 'msg';
+    }
+
+    function showDashboard() {
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('dashboard').classList.remove('hidden');
+      loadFromFirebase();
+    }
+
+    logout();
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'hidden') logout();
+    });
+    window.addEventListener('blur', logout);
+    window.addEventListener('pagehide', logout);
+
+    let selectedFile = null;
+    const fileInput = document.getElementById('apkFileInput');
+    const uploadZone = document.getElementById('uploadZone');
+
+    fileInput.addEventListener('change', handleFileSelect);
+    uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+    uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+    uploadZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadZone.classList.remove('dragover');
+      if (e.dataTransfer.files.length) {
+        fileInput.files = e.dataTransfer.files;
+        handleFileSelect({ target: fileInput });
+      }
+    });
+
+    function formatMB(bytes) {
+      return (bytes / (1024 * 1024)).toFixed(1);
+    }
+
+    function handleFileSelect(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      selectedFile = file;
+      const sizeMB = formatMB(file.size);
+      document.getElementById('uploadPlaceholder').classList.add('hidden');
+      document.getElementById('uploadSelected').classList.remove('hidden');
+      document.getElementById('selectedFileName').textContent = file.name;
+      document.getElementById('selectedFileSize').textContent = sizeMB + ' MB';
+      uploadZone.classList.add('has-file');
+      document.getElementById('apkAvailable').checked = true;
+      document.getElementById('fileSize').value = sizeMB + ' MB';
+      document.getElementById('uploadStatus').textContent = 'ফাইল রেডি — সেভ চাপলে আপলোড শুরু হবে';
+      document.getElementById('uploadStatus').style.color = '#00c853';
+    }
+
+    function loadFromFirebase() {
+      db.collection('site_config').doc('main').get().then((doc) => {
+        if (!doc.exists) return;
+        const cfg = doc.data();
+        document.getElementById('apkAvailable').checked = !!cfg.apkAvailable;
+        document.getElementById('apkUrl').value = cfg.apkUrl || '';
+        document.getElementById('version').value = cfg.version || 'v1.0.0';
+        document.getElementById('fileSize').value = cfg.fileSize || '';
+        document.getElementById('statusTitle').value = cfg.statusTitle || '';
+        document.getElementById('statusDesc').value = cfg.statusDesc || '';
+        document.getElementById('statusTitleAvailable').value = cfg.statusTitleAvailable || '';
+        document.getElementById('navText').value = cfg.navText || '';
+        document.getElementById('badgeText').value = cfg.badgeText || '';
+        document.getElementById('heroTitle').value = cfg.heroTitle || '';
+        document.getElementById('heroDesc').value = cfg.heroDesc || '';
+        document.getElementById('guideTitle').value = cfg.guideTitle || '';
+        document.getElementById('guideSub').value = cfg.guideSub || '';
+        document.getElementById('step1Title').value = cfg.step1Title || '';
+        document.getElementById('step1Desc').value = cfg.step1Desc || '';
+        document.getElementById('step2Title').value = cfg.step2Title || '';
+        document.getElementById('step2Desc').value = cfg.step2Desc || '';
+        document.getElementById('step3Title').value = cfg.step3Title || '';
+        document.getElementById('step3Desc').value = cfg.step3Desc || '';
+      }).catch(console.error);
+    }
+
+    async function saveConfig() {
+      const saveBtn = document.getElementById('saveBtn');
+      const msg = document.getElementById('saveMsg');
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'সেভ হচ্ছে...';
+      msg.className = 'msg';
+      msg.textContent = '';
+
+      try {
+        let apkUrl = document.getElementById('apkUrl').value.trim();
+        let apkFileName = 'huntx-app.apk';
+
+        if (selectedFile) {
+          const progressWrap = document.getElementById('progressWrap');
+          const progressBar = document.getElementById('progressBar');
+          const progressText = document.getElementById('progressText');
+          progressWrap.style.display = 'block';
+          progressBar.style.width = '0%';
+          const totalMB = formatMB(selectedFile.size);
+          progressText.textContent = 'আপলোড শুরু... 0.0 / ' + totalMB + ' MB (0%)';
+
+          const ext = (selectedFile.name.split('.').pop() || 'apk').toLowerCase();
+          const path = 'apks/huntx-' + Date.now() + '.' + ext;
+          const storageRef = storage.ref(path);
+          const metadata = {
+            contentType: 'application/vnd.android.package-archive',
+            customMetadata: { originalName: selectedFile.name }
+          };
+          const uploadTask = storageRef.put(selectedFile, metadata);
+
+          await new Promise((resolve, reject) => {
+            uploadTask.on('state_changed',
+              (snap) => {
+                const done = snap.bytesTransferred || 0;
+                const total = snap.totalBytes || selectedFile.size;
+                const pct = total ? Math.round((done / total) * 100) : 0;
+                progressBar.style.width = pct + '%';
+                progressText.textContent = 'আপলোড হচ্ছে... ' + formatMB(done) + ' / ' + formatMB(total) + ' MB (' + pct + '%)';
+                saveBtn.textContent = 'আপলোড ' + pct + '%';
+              },
+              (err) => reject(err),
+              async () => {
+                try {
+                  apkUrl = await uploadTask.snapshot.ref.getDownloadURL();
+                  apkFileName = selectedFile.name;
+                  progressBar.style.width = '100%';
+                  progressText.textContent = 'সম্পন্ন! ' + totalMB + ' / ' + totalMB + ' MB (100%)';
+                  resolve();
+                } catch (e) { reject(e); }
+              }
+            );
+          });
+        }
+
+        if (document.getElementById('apkAvailable').checked && !apkUrl) {
+          throw new Error('APK Available চালু থাকলে ফাইল আপলোড করুন অথবা ম্যানুয়াল লিংক দিন');
+        }
+
+        const cfg = {
+          apkAvailable: document.getElementById('apkAvailable').checked,
+          apkUrl: apkUrl,
+          apkFileName: apkFileName,
+          version: document.getElementById('version').value.trim() || 'v1.0.0',
+          fileSize: document.getElementById('fileSize').value.trim() || '',
+          statusTitle: document.getElementById('statusTitle').value.trim(),
+          statusDesc: document.getElementById('statusDesc').value.trim(),
+          statusTitleAvailable: document.getElementById('statusTitleAvailable').value.trim(),
+          navText: document.getElementById('navText').value.trim(),
+          badgeText: document.getElementById('badgeText').value.trim(),
+          heroTitle: document.getElementById('heroTitle').value.trim(),
+          heroDesc: document.getElementById('heroDesc').value.trim(),
+          guideTitle: document.getElementById('guideTitle').value.trim(),
+          guideSub: document.getElementById('guideSub').value.trim(),
+          step1Title: document.getElementById('step1Title').value.trim(),
+          step1Desc: document.getElementById('step1Desc').value.trim(),
+          step2Title: document.getElementById('step2Title').value.trim(),
+          step2Desc: document.getElementById('step2Desc').value.trim(),
+          step3Title: document.getElementById('step3Title').value.trim(),
+          step3Desc: document.getElementById('step3Desc').value.trim(),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        await db.collection('site_config').doc('main').set(cfg, { merge: true });
+
+        const newPass = document.getElementById('newPassword').value;
+        if (newPass && newPass.length >= 4) {
+          localStorage.setItem(PASS_KEY, newPass);
+          document.getElementById('newPassword').value = '';
+        }
+
+        document.getElementById('apkUrl').value = apkUrl;
+        selectedFile = null;
+
+        msg.className = 'msg success';
+        msg.textContent = '✅ সেভ হয়েছে! সবাই এখন নতুন APK ডাউনলোড করতে পারবে।';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch (err) {
+        console.error(err);
+        msg.className = 'msg error';
+        let t = err && err.message ? err.message : 'আবার চেষ্টা করুন';
+        const code = err && err.code ? err.code : '';
+        if (code === 'storage/unauthorized' || /unauthorized|permission/i.test(t)) {
+          t = 'Storage অনুমতি নেই। Firebase → Storage → Rules এ allow write: if true Publish করুন, এবং Blaze প্ল্যান চালু আছে কিনা দেখুন।';
+        } else if (code === 'storage/unknown' || /upgrade|billing|not found/i.test(t)) {
+          t = 'Storage চালু নেই। Firebase Console → Storage → Upgrade project (Blaze) করুন। ফ্রি কোটা আছে।';
+        }
+        msg.textContent = 'সেভ ব্যর্থ: ' + t;
+      }
+
+      saveBtn.disabled = false;
+      saveBtn.textContent = '💾 আপলোড ও সেভ (লাইভ)';
+    }
+
+    document.getElementById('password').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') login();
+    });
+  </script>
+</body>
+</html>
