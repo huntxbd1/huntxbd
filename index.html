@@ -590,7 +590,8 @@
     <script>
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', function () {
-            navigator.serviceWorker.register('/sw.js').catch(function () {});
+            // Relative path — works on GitHub Pages subdirectory & root
+            navigator.serviceWorker.register('./sw.js', { scope: './' }).catch(function () {});
         });
     }
     </script>
