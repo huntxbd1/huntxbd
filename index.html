@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HuntX BD - Free Fire Tournament</title>
+    <meta name="theme-color" content="#e10600">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HuntX BD">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="logo.png">
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="splash-particles" id="splash-particles"></div>
+        <div class="loader">
+            <div class="logo-ring">
+                <img src="logo.png" alt="HuntX BD" class="logo-img-loading">
+            </div>
+            <h2>HuntX BD</h2>
+            <p class="splash-version">2.0</p>
+            <div class="splash-progress-wrap">
+                <div class="splash-status" id="splash-status">Initializing...</div>
+                <div class="splash-bar">
+                    <div class="splash-bar-fill" id="splash-bar-fill"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- App Closed / Maintenance (users only; admin bypass) -->
+    <div id="maintenance-screen" class="hidden">
+        <div class="maint-bg"></div>
+        <div class="maint-box">
+            <div class="maint-icon">🔧</div>
+            <h2>HuntX BD</h2>
+            <p id="maint-message" class="maint-msg">এই মুহূর্তে অ্যাপটি বন্ধ আছে। টেকনিক্যাল সমস্যার কারণে। দয়া করে পরে আবার চেষ্টা করুন।</p>
+            <p class="maint-sub">Technical maintenance — please try again later</p>
+            <button type="button" class="maint-ok-btn" id="maint-ok-btn">OK</button>
+        </div>
+    </div>
+
+    <!-- Auth Screens -->
+    <div id="auth-container" class="hidden">
+        <!-- Login -->
+        <div id="login-screen" class="auth-screen">
+            <div class="auth-header">
+                <div class="logo-circle">
+                    <img src="logo.png" alt="HuntX BD" class="logo-img">
+                </div>
+                <h1>HuntX BD</h1>
+                <p>Free Fire Tournament App</p>
+            </div>
+            <div class="auth-card">
+                <h2>লগইন করুন</h2>
+                <form id="login-form">
+                    <div class="input-group">
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="login-username" placeholder="ইউজারনেম" required autocomplete="username">
+                    </div>
+                    <div class="input-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="login-password" placeholder="পাসওয়ার্ড" required autocomplete="current-password">
+                    </div>
+                    <button type="submit" class="btn-primary">লগইন</button>
+                </form>
+                <p class="auth-switch" style="margin-top:12px;"><a href="#" id="show-forgot">পাসওয়ার্ড ভুলে গেছেন?</a></p>
+                <p class="auth-switch">অ্যাকাউন্ট নেই? <a href="#" id="show-register">রেজিস্টার করুন</a></p>
+            </div>
+        </div>
+
+        <!-- Forgot Password -->
+        <div id="forgot-screen" class="auth-screen hidden">
+            <div class="auth-header">
+                <div class="logo-circle">
+                    <img src="logo.png" alt="HuntX BD" class="logo-img">
+                </div>
+                <h1>HuntX BD</h1>
+                <p>পাসওয়ার্ড রিসেট</p>
+            </div>
+            <div class="auth-card">
+                <h2>Forgot Password</h2>
+                <div id="forgot-step1">
+                    <div class="input-group">
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="forgot-username" placeholder="ইউজারনেম">
+                    </div>
+                    <div class="input-group">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="forgot-email" placeholder="রেজিস্টার করা ইমেইল">
+                    </div>
+                    <button type="button" class="btn-primary" id="btn-send-otp">কোড পাঠান</button>
+                </div>
+                <div id="forgot-step2" class="hidden">
+                    <p style="font-size:13px;color:#636e72;margin-bottom:12px;text-align:center;">আপনার ইমেইলে কোড পাঠানো হয়েছে (ডেমোতে নিচে দেখানো হবে)</p>
+                    <div class="input-group">
+                        <i class="fas fa-key"></i>
+                        <input type="text" id="forgot-otp" placeholder="৬ ডিজিট কোড">
+                    </div>
+                    <div class="input-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="forgot-newpass" placeholder="নতুন পাসওয়ার্ড">
+                    </div>
+                    <button type="button" class="btn-primary" id="btn-reset-pass">পাসওয়ার্ড রিসেট করুন</button>
+                </div>
+                <p class="auth-switch"><a href="#" id="show-login-from-forgot">লগইনে ফিরে যান</a></p>
+            </div>
+        </div>
+
+        <!-- Register -->
+        <div id="register-screen" class="auth-screen hidden">
+            <div class="auth-header">
+                <div class="logo-circle">
+                    <img src="logo.png" alt="HuntX BD" class="logo-img">
+                </div>
+                <h1>HuntX BD</h1>
+                <p>নতুন অ্যাকাউন্ট তৈরি করুন</p>
+            </div>
+            <div class="auth-card">
+                <h2>রেজিস্ট্রেশন</h2>
+                <form id="register-form">
+                    <div class="input-group">
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="reg-username" placeholder="ইউজারনেম" required minlength="3" autocomplete="username">
+                    </div>
+                    <div class="input-group">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="reg-email" placeholder="ইমেইল (Gmail)" required>
+                    </div>
+                    <div class="input-group">
+                        <i class="fas fa-phone"></i>
+                        <input type="tel" id="reg-phone" placeholder="মোবাইল নম্বর (01XXXXXXXXX)" required pattern="01[3-9][0-9]{8}">
+                    </div>
+                    <div class="input-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="reg-password" placeholder="পাসওয়ার্ড" required minlength="4" autocomplete="new-password">
+                    </div>
+                    <div class="input-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="reg-confirm" placeholder="পাসওয়ার্ড কনফার্ম" required autocomplete="new-password">
+                    </div>
+                    <button type="submit" class="btn-primary">রেজিস্টার</button>
+                </form>
+                <p class="auth-switch">অ্যাকাউন্ট আছে? <a href="#" id="show-login">লগইন করুন</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="app-container" class="hidden">
+        <!-- Page Content -->
+        <div id="page-content">
+            <!-- PLAY PAGE -->
+            <div id="play-page" class="page">
+                <div class="home-slider-wrap" id="home-slider-wrap">
+                    <div id="home-slider" class="home-slider" style="display:none;"></div>
+                    <button type="button" class="nav-balance-chip" id="nav-balance-chip" title="Wallet">
+                        <i class="fas fa-wallet"></i>
+                        <span id="nav-balance-text">৳0</span>
+                    </button>
+                </div>
+                <div class="page-header-text">
+                    HuntX BD - বাংলাদেশের সেরা ফ্রি ফায়ার টুর্নামেন্ট অ্যাপ
+                </div>
+                <h2 class="section-title">FREE FIRE</h2>
+                <div class="match-categories">
+                    <!-- Categories loaded dynamically by JS -->
+                </div>
+            </div>
+
+            <!-- MATCH LIST PAGE -->
+            <div id="match-list-page" class="page hidden">
+                <div class="page-top-bar">
+                    <button class="back-btn" id="back-to-play"><i class="fas fa-arrow-left"></i></button>
+                    <h2 id="match-list-title">BR MATCHES</h2>
+                    <button class="refresh-btn" id="refresh-matches"><i class="fas fa-sync-alt"></i></button>
+                </div>
+                <div id="matches-container" class="matches-list">
+                    <!-- Matches will be injected here -->
+                </div>
+            </div>
+
+            <!-- MATCH DETAIL -->
+            <div id="match-detail-page" class="page hidden"></div>
+
+            <!-- MY MATCHES PAGE -->
+            <div id="my-matches-page" class="page hidden">
+                <div class="page-top-bar">
+                    <h2>My Matches</h2>
+                </div>
+                <div class="tabs">
+                    <button class="tab active" data-tab="upcoming">Upcoming</button>
+                    <button class="tab" data-tab="ongoing">Ongoing</button>
+                    <button class="tab" data-tab="completed">Completed</button>
+                </div>
+                <div id="my-matches-list" class="matches-list"></div>
+            </div>
+
+            <!-- RESULTS PAGE -->
+            <div id="results-page" class="page hidden">
+                <div class="page-top-bar">
+                    <h2>Results</h2>
+                </div>
+                <div id="results-list" class="matches-list"></div>
+            </div>
+
+            <!-- SHOP PAGE -->
+            <div id="shop-page" class="page hidden">
+                <div class="page-top-bar">
+                    <h2>Shop - Diamond Topup</h2>
+                </div>
+                <div class="shop-info">
+                    <p>ডায়মন্ড টপআপের জন্য আমাদের Telegram Support-এ যোগাযোগ করুন।</p>
+                    <a href="#" id="shop-telegram-link" target="_blank" class="btn-telegram">
+                        <i class="fab fa-telegram"></i> Telegram Support
+                    </a>
+                </div>
+            </div>
+
+            <!-- PROFILE PAGE -->
+            <div id="profile-page" class="page hidden">
+                <div class="profile-header">
+                    <div class="profile-avatar" id="profile-avatar-display">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <h2 id="profile-display-name">username</h2>
+                    <p id="profile-username-sub" style="font-size:13px;opacity:0.8;margin-top:2px;"></p>
+                    <div class="profile-stats">
+                        <div class="stat">
+                            <span class="stat-num" id="stat-matches">0</span>
+                            <span class="stat-label">ম্যাচ জয়েন করেছেন</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-num" id="stat-balance">BDT 0</span>
+                            <span class="stat-label">ব্যালেন্স</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-num" id="stat-wins">0</span>
+                            <span class="stat-label">এখন পর্যন্ত জিতেছেন</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="profile-menu">
+                    <div class="menu-item" id="menu-wallet">
+                        <i class="fas fa-wallet"></i>
+                        <span>Wallet</span>
+                    </div>
+                    <div class="menu-item" id="menu-withdraw">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <span>Withdraw</span>
+                    </div>
+                    <div class="menu-item" id="menu-tx-history">
+                        <i class="fas fa-receipt"></i>
+                        <span>Transaction History</span>
+                        <i class="fas fa-chevron-right" style="margin-left:auto;opacity:0.5;"></i>
+                    </div>
+                    <div class="menu-item" id="menu-myprofile">
+                        <i class="fas fa-user-circle"></i>
+                        <span>My Profile</span>
+                        <i class="fas fa-chevron-right" style="margin-left:auto;opacity:0.5;"></i>
+                    </div>
+                    <div class="menu-item" id="menu-rules">
+                        <i class="fas fa-book"></i>
+                        <span>All Rules</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                    <div class="menu-item" id="menu-topplayers">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Top Players</span>
+                    </div>
+                    <div class="menu-item hidden" id="menu-admin">
+                        <i class="fas fa-user-shield"></i>
+                        <span>Admin Panel</span>
+                    </div>
+                </div>
+                <button id="logout-btn" class="btn-logout">Logout</button>
+            </div>
+
+            <!-- EDIT PROFILE PAGE -->
+            <div id="edit-profile-page" class="page hidden">
+                <div class="page-top-bar">
+                    <button class="back-btn" id="back-from-edit-profile"><i class="fas fa-arrow-left"></i></button>
+                    <h2>My Profile</h2>
+                </div>
+                <div class="form-card" style="text-align:center;margin-bottom:12px;">
+                    <div class="profile-avatar" id="edit-avatar-preview" style="margin:0 auto 10px;width:88px;height:88px;font-size:36px;cursor:pointer;position:relative;overflow:hidden;">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <h3 id="myprofile-display-name" style="margin:6px 0 2px;font-size:18px;color:#f0f2f8;">—</h3>
+                    <p id="myprofile-email" style="font-size:12px;color:#8b93a7;margin:0 0 10px;">—</p>
+                </div>
+                <div class="form-card">
+                    <h3 style="font-size:15px;margin-bottom:12px;color:#e8ecf8;"><i class="fas fa-user" style="margin-right:6px;color:#5b9dff;"></i>Basic Details</h3>
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" id="edit-username" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Nickname / Display Name</label>
+                        <input type="text" id="edit-nickname" placeholder="নিকনেম" maxlength="20">
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="text" id="edit-email" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Mobile Number</label>
+                        <input type="text" id="edit-phone" disabled>
+                    </div>
+                    <button class="btn-primary" id="save-profile-btn">Save Profile</button>
+                </div>
+                <div class="form-card" style="margin-top:12px;">
+                    <h3 style="font-size:15px;margin-bottom:12px;color:#e8ecf8;"><i class="fas fa-lock" style="margin-right:6px;color:#ff6b6b;"></i>Password Change</h3>
+                    <div class="form-group">
+                        <label>Current Password</label>
+                        <input type="password" id="my-current-pass" placeholder="বর্তমান পাসওয়ার্ড" autocomplete="current-password">
+                    </div>
+                    <div class="form-group">
+                        <label>New Password</label>
+                        <input type="password" id="my-new-pass" placeholder="নতুন পাসওয়ার্ড (মিনিমাম ৪)" autocomplete="new-password">
+                    </div>
+                    <div class="form-group">
+                        <label>Confirm Password</label>
+                        <input type="password" id="my-confirm-pass" placeholder="আবার লিখুন" autocomplete="new-password">
+                    </div>
+                    <button type="button" class="btn-primary" id="change-my-password-btn">Change Password</button>
+                </div>
+            </div>
+
+            <!-- WALLET PAGE -->
+            <div id="wallet-page" class="page hidden">
+                <div class="page-top-bar">
+                    <button class="back-btn" id="back-to-profile"><i class="fas fa-arrow-left"></i></button>
+                    <h2>Wallet</h2>
+                </div>
+                <div class="wallet-hero-card">
+                    <div class="wallet-hero-top">
+                        <span class="wallet-brand"><i class="fas fa-gamepad"></i> HuntX BD</span>
+                        <span class="wallet-badge">WALLET</span>
+                    </div>
+                    <p class="wallet-hero-label">Available Balance</p>
+                    <h1 id="wallet-balance" class="wallet-hero-amount">৳ 0</h1>
+                    <div class="wallet-hero-footer">
+                        <span>VALID THRU ∞</span>
+                        <span>GAMING</span>
+                    </div>
+                </div>
+                <div class="wallet-split-card">
+                    <div class="wallet-split-item">
+                        <i class="fas fa-wallet"></i>
+                        <span class="split-label">DEPOSITED</span>
+                        <strong id="wallet-deposited">৳ 0</strong>
+                    </div>
+                    <div class="wallet-split-divider"></div>
+                    <div class="wallet-split-item">
+                        <i class="fas fa-trophy"></i>
+                        <span class="split-label winning">WINNING</span>
+                        <strong id="wallet-winning" class="winning">৳ 0</strong>
+                    </div>
+                </div>
+                <div class="wallet-actions-row">
+                    <button type="button" class="btn-wallet-add" id="btn-deposit">
+                        <i class="fas fa-plus-circle"></i> Add Money
+                    </button>
+                    <button type="button" class="btn-wallet-wd" id="btn-go-withdraw">
+                        <i class="fas fa-money-bill-wave"></i> Withdraw
+                    </button>
+                </div>
+                <div class="wallet-quick-card" id="btn-wallet-tx-history">
+                    <div class="wallet-quick-left">
+                        <i class="fas fa-chart-line"></i>
+                        <div>
+                            <strong>Transaction History</strong>
+                            <p>View all your transactions</p>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="wallet-learn-section">
+                    <h3><i class="fas fa-info-circle"></i> Learn and Support</h3>
+                    <div class="wallet-learn-list" id="wallet-learn-list">
+                        <a class="wallet-learn-item" id="learn-add-money" href="#" target="_blank" rel="noopener">
+                            <i class="fas fa-gamepad"></i>
+                            <div>
+                                <strong>How to add money?</strong>
+                                <p>কিভাবে টাকা অ্যাড করবেন</p>
+                            </div>
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                        <a class="wallet-learn-item" id="learn-join-match" href="#" target="_blank" rel="noopener">
+                            <i class="fas fa-user-astronaut"></i>
+                            <div>
+                                <strong>How to join a match?</strong>
+                                <p>কিভাবে ম্যাচে জয়েন করবেন</p>
+                            </div>
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                        <a class="wallet-learn-item" id="learn-join-room" href="#" target="_blank" rel="noopener">
+                            <i class="fas fa-users"></i>
+                            <div>
+                                <strong>How to join in a room?</strong>
+                                <p>কিভাবে রুমে জয়েন করবেন</p>
+                            </div>
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </div>
+                </div>
+                <div id="transaction-history" class="transaction-list" style="display:none;"></div>
+            </div>
+
+            <!-- DEPOSIT PAGE -->
+            <div id="deposit-page" class="page hidden">
+                <div class="page-top-bar">
+                    <button class="back-btn" id="back-to-wallet-from-deposit"><i class="fas fa-arrow-left"></i></button>
+                    <h2>Add Money</h2>
+                </div>
+                <div class="deposit-method-tabs">
+                    <button type="button" class="dep-tab active" data-method="bKash">bKash</button>
+                    <button type="button" class="dep-tab" data-method="Nagad">Nagad</button>
+                </div>
+                <div id="deposit-method-box" class="deposit-box bkash-box">
+                    <h3>ট্রানজেকশন আইডি দিন</h3>
+                    <p style="font-size:12px;color:#8b93a7;margin:0 0 10px;line-height:1.5;">শুধু ট্রানজেকশন আইডি দিন। টাকার পরিমাণ অ্যাডমিন ট্রানজেকশন দেখে নিজে সেট করবেন।</p>
+                    <input type="text" id="deposit-trx" placeholder="ট্রানজেকশন আইডি দিন">
+                    <div id="deposit-instructions" class="deposit-instructions"></div>
+                    <button type="button" class="btn-verify" id="submit-deposit">VERIFY</button>
+                </div>
+            </div>
+
+            <!-- WITHDRAW PAGE -->
+            <div id="withdraw-page" class="page hidden">
+                <div class="page-top-bar">
+                    <button class="back-btn" id="back-to-profile-from-withdraw"><i class="fas fa-arrow-left"></i></button>
+                    <h2>Withdraw Money</h2>
+                </div>
+                <div class="wallet-card small">
+                    <div class="wallet-icon"><i class="fas fa-wallet"></i></div>
+                    <p>Withdrawable (Winning Only)</p>
+                    <h1 id="withdraw-balance">BDT 0</h1>
+                    <p id="withdraw-win-note" style="font-size:12px;opacity:0.85;margin-top:6px;">শুধু ম্যাচ উইনিং প্রাইজ উইথড্র করা যাবে — ডিপোজিট নয়</p>
+                </div>
+                <div class="form-card">
+                    <h3><i class="fas fa-university"></i> Select Payment Method</h3>
+                    <div class="payment-methods">
+                        <label class="pay-method">
+                            <input type="radio" name="withdraw-method" value="bKash" checked>
+                            <span class="pay-box bkash">bKash</span>
+                        </label>
+                        <label class="pay-method">
+                            <input type="radio" name="withdraw-method" value="Nagad">
+                            <span class="pay-box nagad">Nagad</span>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-mobile-alt"></i> Mobile Number</label>
+                        <input type="tel" id="withdraw-number" placeholder="01XXXXXXXXX">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-money-bill"></i> Amount to Withdraw</label>
+                        <input type="number" id="withdraw-amount" placeholder="Amount">
+                        <p class="min-note">MINIMUM WITHDRAW 105 TK</p>
+                    </div>
+                    <button class="btn-primary green" id="submit-withdraw">
+                        <i class="fas fa-paper-plane"></i> Withdraw Money
+                    </button>
+                </div>
+            </div>
+
+
+            <!-- TRANSACTION HISTORY PAGE -->
+            <div id="tx-history-page" class="page hidden">
+                <div class="page-top-bar">
+                    <button class="back-btn" id="back-from-tx-history"><i class="fas fa-arrow-left"></i></button>
+                    <h2>MY HISTORY</h2>
+                </div>
+                <div class="tx-tabs" id="tx-history-tabs">
+                    <button type="button" class="tx-tab active" data-tx-tab="deposit">Add Money</button>
+                    <button type="button" class="tx-tab" data-tx-tab="join">Match Entry</button>
+                    <button type="button" class="tx-tab" data-tx-tab="withdraw">Withdraw Transaction</button>
+                    <button type="button" class="tx-tab" data-tx-tab="balance">Balance Edit</button>
+                    <button type="button" class="tx-tab" data-tx-tab="reward">Leaderboard Reward</button>
+                </div>
+                <div id="tx-history-list" class="tx-history-list"></div>
+            </div>
+
+            <!-- RULES PAGE -->
+            <div id="rules-page" class="page hidden">
+                <div class="page-top-bar">
+                    <button class="back-btn" id="back-from-rules"><i class="fas fa-arrow-left"></i></button>
+                    <h2>All Rules</h2>
+                </div>
+                <div class="rules-content" id="rules-content"></div>
+            </div>
+
+            <!-- TOP PLAYERS PAGE -->
+            <div id="top-players-page" class="page hidden">
+                <div class="page-top-bar">
+                    <button class="back-btn" id="back-from-topplayers"><i class="fas fa-arrow-left"></i></button>
+                    <h2>Top Players</h2>
+                </div>
+                <div id="top-players-list" class="matches-list"></div>
+            </div>
+
+            <!-- ADMIN PANEL -->
+            <div id="admin-page" class="page hidden">
+                <div class="page-top-bar admin-bar">
+                    <button class="back-btn" id="back-from-admin"><i class="fas fa-arrow-left"></i></button>
+                    <h2>Admin Panel</h2>
+                </div>
+                <div class="admin-tabs">
+                    <button class="admin-tab active" data-admin="matches">Matches</button>
+                    <button class="admin-tab" data-admin="deposits">Add Money</button>
+                    <button class="admin-tab" data-admin="withdraws">Withdraws</button>
+                    <button class="admin-tab" data-admin="users">Users</button>
+                    <button class="admin-tab" data-admin="results-dist">Result Dist</button>
+                    <button class="admin-tab" data-admin="rules">Rules</button>
+                    <button class="admin-tab" data-admin="pro-control">Pro League</button>
+                    <button class="admin-tab" data-admin="settings">Settings</button>
+                </div>
+                <div id="admin-content"></div>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <nav id="bottom-nav" class="bottom-nav">
+            <button class="nav-item active" data-page="play">
+                <i class="fas fa-gamepad"></i>
+                <span>Play</span>
+            </button>
+            <button class="nav-item" data-page="pro-league">
+                <i class="fas fa-trophy"></i>
+                <span>Pro League</span>
+            </button>
+            <button class="nav-item" data-page="my-matches">
+                <i class="fas fa-list"></i>
+                <span>My Matches</span>
+            </button>
+            <button class="nav-item" data-page="results">
+                <i class="fas fa-chart-bar"></i>
+                <span>Results</span>
+            </button>
+            <button class="nav-item" data-page="profile">
+                <i class="fas fa-user"></i>
+                <span>Profile</span>
+            </button>
+        </nav>
+
+        <!-- Floating Support Button -->
+        <div id="support-btn" class="support-float">
+            <i class="fas fa-headset"></i>
+        </div>
+    </div>
+
+    <!-- Mini Page Loader -->
+    <div id="mini-loader" class="mini-loader hidden">
+        <div class="mini-loader-box">
+            <div class="mini-loader-ring"></div>
+            <div class="mini-loader-bar">
+                <div class="mini-loader-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast hidden"></div>
+
+    <!-- Modal -->
+    <div id="modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Title</h3>
+                <button id="modal-close">&times;</button>
+            </div>
+            <div id="modal-body"></div>
+            <div class="modal-footer" id="modal-footer"></div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+            navigator.serviceWorker.register('/sw.js').catch(function () {});
+        });
+    }
+    </script>
+</body>
+</html>
